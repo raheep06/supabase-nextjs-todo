@@ -3,9 +3,12 @@ import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { Auth, ThemeSupa } from '@supabase/auth-ui-react'
 import TodoList from '@/components/TodoList'
 
-export default function Home() {
+
+function Home() {
   const session = useSession()
   const supabase = useSupabaseClient()
+  console.log(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   return (
     <>
@@ -48,3 +51,5 @@ export default function Home() {
     </>
   )
 }
+
+export default Home
