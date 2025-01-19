@@ -26,12 +26,79 @@ function TodoList({ session }: { session: Session }) {
     fetchTodos()
   }, [supabase])
 
-  const addTodo = async (taskText: string) => {
+
+  useEffect(() => {
+    const fetchAssignedToMe = async () => {
+      const { data: todos, error } = await supabase
+        .from('todos')
+        .select('*')
+        .eq('assigned_to', user.id)
+        .order('id', { ascending: true })
+
+      if (error) console.log('error', error)
+      else setTodos(todos)
+    }
+
+    fetchAssignedToMe()
+  }, [supabase])
+
+  useEffect(() => {
+    const fetchCreatedByMe = async () => {
+      const { data: todos, error } = await supabase
+        .from('todos')
+        .select('*')
+        .eq("user_id", user.id)
+        .order('id', { ascending: true })
+
+      if (error) console.log('error', error)
+      else setTodos(todos)
+    }
+
+    fetchCreatedByMe()
+  }, [supabase])
+
+  useEffect(() => {
+    const fetchOverdueTasks = async () => {
+      const { data: todos, error } = await supabase
+        .from('todos')
+        .select('*')
+        .lt("due_date", new Date().toISOString())
+        .eq("assigned_to", user.id)
+
+      if (error) console.log('error', error)
+      else setTodos(todos)
+    }
+
+    fetchOverdueTasks()
+  }, [supabase])
+
+  useEffect(() => {
+    const fetchTasksDueToday = async () => {
+      const today = new Date();
+      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+
+      const { data: todos, error } = await supabase
+        .from('todos')
+        .select('*')
+        .gte("due_date", startOfDay)
+        .lte("due_date", endOfDay)
+        .eq("assigned_to", user.id)
+
+      if (error) console.log('error', error)
+      else setTodos(todos)
+    }
+
+    fetchTasksDueToday()
+  }, [supabase])
+  
+
+  const addTodo = async (taskText: string, assignedTo: string, dueDate: string) => {
     let task = taskText.trim()
     if (task.length) {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({ task, user_id: user.id})
+        .insert({ task, user_id: user.id, assigned_to: assignedTo, due_date: dueDate})
         .select()
         .single()
 
