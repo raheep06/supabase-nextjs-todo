@@ -8,54 +8,40 @@ function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
   const [todos, setTodos] = useState<Todos[]>([])
   const [newTaskText, setNewTaskText] = useState('')
+  const [assignedTo, setAssignedTo] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [errorText, setErrorText] = useState('')
 
   const user = session.user
 
+  const validateUser = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+  
+    return data ? true : false;
+  };
+
   useEffect(() => {
     const fetchTodos = async () => {
-      const { data: todos, error } = await supabase
-        .from('todos')
-        .select('*')
-        .order('id', { ascending: true })
+      let query = supabase.from('todos').select('*').order('id', { ascending: true });
+      query = query.eq("assigned_to", user.id);
 
-      if (error) console.log('error', error)
-      else setTodos(todos)
+      try {
+        const { data: todos, error} = await query;
+        if (error) throw error;
+
+        setTodos(todos);
+      } catch (error) {
+        console.error("Error fetching todos:", error);
+      }
     }
 
-    fetchTodos()
-  }, [supabase])
+    fetchTodos();
+  }, [supabase, user.id]);
 
-
-  useEffect(() => {
-    const fetchAssignedToMe = async () => {
-      const { data: todos, error } = await supabase
-        .from('todos')
-        .select('*')
-        .eq('assigned_to', user.id)
-        .order('id', { ascending: true })
-
-      if (error) console.log('error', error)
-      else setTodos(todos)
-    }
-
-    fetchAssignedToMe()
-  }, [supabase])
-
-  useEffect(() => {
-    const fetchCreatedByMe = async () => {
-      const { data: todos, error } = await supabase
-        .from('todos')
-        .select('*')
-        .eq("user_id", user.id)
-        .order('id', { ascending: true })
-
-      if (error) console.log('error', error)
-      else setTodos(todos)
-    }
-
-    fetchCreatedByMe()
-  }, [supabase])
 
   useEffect(() => {
     const fetchOverdueTasks = async () => {
@@ -95,21 +81,38 @@ function TodoList({ session }: { session: Session }) {
 
   const addTodo = async (taskText: string, assignedTo: string, dueDate: string) => {
     let task = taskText.trim()
-    if (task.length) {
+    const assignedUser = assignedTo.trim()
+    const due = dueDate.trim()
+
+    if (!task.length) {
+      setErrorText("Task cannot be empty.");
+      return;
+    }
+
+    if (!assignedUser) {
+      setErrorText("Assigned to cannot be empty.");
+      return;
+    }
+
+    try {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({ task, user_id: user.id, assigned_to: assignedTo, due_date: dueDate})
+        .insert({ task, user_id: user.id, assigned_to: assignedUser, due_date: dueDate || null})
         .select()
-        .single()
+        .single();
 
-      if (error) {
-        setErrorText(error.message)
-      } else {
-        setTodos([...todos, todo])
-        setNewTaskText('')
-      }
+      if (error) throw error;
+
+      setTodos([...todos, todo]);
+      setNewTaskText('');
+      setAssignedTo('');
+      setDueDate('');
+      setErrorText('');
+      
+    } catch (error) {
+      setErrorText("Failed to add task.")
     }
-  }
+  };
 
   const deleteTodo = async (id: number) => {
     try {
@@ -126,7 +129,7 @@ function TodoList({ session }: { session: Session }) {
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          addTodo(newTaskText)
+          addTodo(newTaskText, assignedTo, dueDate)
         }}
         className="flex gap-2 my-2"
       >
@@ -138,6 +141,24 @@ function TodoList({ session }: { session: Session }) {
           onChange={(e) => {
             setErrorText('')
             setNewTaskText(e.target.value)
+          }}
+        />
+        
+        <input
+          className="rounded w-full p-2"
+          type="text"
+          placeholder="Assigned to (user ID)"
+          onChange={(e) => {
+            setAssignedTo(e.target.value)
+          }}
+        />
+        
+        <input
+          className="rounded w-full p-2"
+          type="date"
+          placeholder="Due date for"
+          onChange={(e) => {
+            setDueDate(e.target.value)
           }}
         />
         <button className="btn-black" type="submit">
@@ -178,6 +199,9 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
 
   return (
     <li className="w-full block cursor-pointer hover:bg-200 focus:outline-none focus:bg-200 transition duration-150 ease-in-out">
+      <div className="text-sm text-gray-500">
+        Assigned to: {todo.assigned_to || 'No one'}
+      </div>
       <div className="flex items-center px-4 py-4 sm:px-6">
         <div className="min-w-0 flex-1 flex items-center">
           <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>

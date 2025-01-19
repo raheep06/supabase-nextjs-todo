@@ -15,6 +15,6 @@ function App({ Component, pageProps }: AppProps) {
       <Component {...pageProps} />
     </SessionContextProvider>
   )
-}
+} 
 
 export default App
