@@ -2,13 +2,28 @@ import Head from 'next/head'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { Auth, ThemeSupa } from '@supabase/auth-ui-react'
 import TodoList from '@/components/TodoList'
+import { useEffect } from 'react'
 
 
 function Home() {
   const session = useSession()
   const supabase = useSupabaseClient()
-  console.log(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const { data, error } = await supabase
+        .from('todos')
+        .select('*')
+
+      if (error) {
+        console.error('Error fetching tasks:', error)
+      } else {
+        console.log('Fetched tasks:', data)
+      }
+    }
+
+    fetchTasks()
+  }, [supabase]) // Dependency array ensures this runs only once
 
   return (
     <>
