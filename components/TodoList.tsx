@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 type Todos = Database['public']['Tables']['todos']['Row']
 
-export default function TodoList({ session }: { session: Session }) {
+function TodoList({ session }: { session: Session }) {
   const supabase = useSupabaseClient<Database>()
   const [todos, setTodos] = useState<Todos[]>([])
   const [newTaskText, setNewTaskText] = useState('')
@@ -31,7 +31,7 @@ export default function TodoList({ session }: { session: Session }) {
     if (task.length) {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({ task, user_id: user.id })
+        .insert({ task, user_id: user.id})
         .select()
         .single()
 
@@ -149,3 +149,5 @@ const Alert = ({ text }: { text: string }) => (
     <div className="text-sm leading-5 text-red-700">{text}</div>
   </div>
 )
+
+export default TodoList

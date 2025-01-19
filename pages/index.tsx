@@ -9,22 +9,6 @@ function Home() {
   const session = useSession()
   const supabase = useSupabaseClient()
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const { data, error } = await supabase
-        .from('todos')
-        .select('*')
-
-      if (error) {
-        console.error('Error fetching tasks:', error)
-      } else {
-        console.log('Fetched tasks:', data)
-      }
-    }
-
-    fetchTasks()
-  }, [supabase]) // Dependency array ensures this runs only once
-
   return (
     <>
       <Head>
