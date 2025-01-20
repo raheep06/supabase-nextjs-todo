@@ -2,6 +2,8 @@ import { Database } from '@/lib/schema'
 import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 import { fetchAllUsers } from '@/lib/fetchAllUsers'
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type Todos = Database['public']['Tables']['todos']['Row']
 
@@ -70,8 +72,10 @@ function TodoList({ session }: { session: Session }) {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'todos' },
         (payload) => {
+          console.log(payload)
           if (payload.eventType === 'INSERT' && payload.new.assigned_to === user.id) {
             setTodos((prev) => [...prev, payload.new as Todos])
+            toast.info(`New Task Assigned: ${payload.new.task}`);
           } else if (payload.eventType === 'DELETE') {
             setTodos((prev) => prev.filter((todo) => todo.id !== payload.old?.id))
           } else if (payload.eventType === 'UPDATE') {
