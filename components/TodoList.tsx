@@ -95,43 +95,6 @@ function TodoList({ session }: { session: Session }) {
 
   }, [supabase, user.id, filter]);
 
-/*
-  useEffect(() => {
-    const fetchOverdueTasks = async () => {
-      const { data: todos, error } = await supabase
-        .from('todos')
-        .select('*')
-        .lt("due_date", new Date().toISOString())
-        .eq("assigned_to", user.id)
-
-      if (error) console.log('error', error)
-      else setTodos(todos)
-    }
-
-    fetchOverdueTasks()
-  }, [supabase])
-
-  useEffect(() => {
-    const fetchTasksDueToday = async () => {
-      const today = new Date();
-      const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-      const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
-
-      const { data: todos, error } = await supabase
-        .from('todos')
-        .select('*')
-        .gte("due_date", startOfDay)
-        .lte("due_date", endOfDay)
-        .eq("assigned_to", user.id)
-
-      if (error) console.log('error', error)
-      else setTodos(todos)
-    }
-
-    fetchTasksDueToday()
-  }, [supabase])
-  
-*/
   const addTodo = async (taskText: string, assignedTo: string, dueDate: string) => {
     let task = taskText.trim()
     const assignedUser = assignedTo.trim()
