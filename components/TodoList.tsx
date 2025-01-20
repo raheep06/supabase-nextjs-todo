@@ -13,6 +13,7 @@ function TodoList({ session }: { session: Session }) {
   const [dueDate, setDueDate] = useState('')
   const [errorText, setErrorText] = useState('')
   const [users, setUsers] = useState<any[]>([])
+  const [filter, setFilter] = useState<'all' | 'assignedToMe' | 'createdByMe' | 'overdue' | 'dueToday'>('all'); 
 
   const user = session.user
 
@@ -33,7 +34,21 @@ function TodoList({ session }: { session: Session }) {
 
   const fetchTodos = async () => {
     let query = supabase.from('todos').select('*').order('id', { ascending: true });
-    query = query.eq("assigned_to", user.id);
+    if (filter === "assignedToMe") {
+      query = query.eq("assigned_to", user.id)
+
+    } else if (filter === "createdByMe") {
+      query = query.eq("assigned_by", user.id)
+
+    } else if (filter === "overdue") {
+      query = query.lt("due_date", new Date().toISOString())
+
+    } else if (filter === "dueToday") {
+      const today = new Date();
+      const startOfDay = new Date(today.setHours(0,0,0,0)).toISOString()
+      const endOfDay = new Date(today.setHours(23,59,59,999)).toISOString()
+      query = query.gte("due_date", startOfDay).lte("due_date", endOfDay)
+    }
 
     try {
       const { data: todos, error} = await query;
@@ -74,7 +89,7 @@ function TodoList({ session }: { session: Session }) {
 
 */
 
-  }, [supabase, user.id]);
+  }, [supabase, user.id, filter]);
 
 /*
   useEffect(() => {
@@ -166,6 +181,25 @@ function TodoList({ session }: { session: Session }) {
   return (
     <div className="w-full">
       <h1 className="mb-12">Todo List.</h1>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        <button onClick={() => setFilter("all")} className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>
+          All Tasks
+        </button>
+        <button onClick={() => setFilter("assignedToMe")} className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'>
+          Tasks Assigned To ME
+        </button>
+        <button onClick={() => setFilter("createdByMe")} className='bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded'>
+          MY Created Tasks
+        </button>
+        <button onClick={() => setFilter("overdue")} className='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded'>
+          Overdue Tasks
+        </button>
+        <button onClick={() => setFilter("dueToday")} className='bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded'>
+          Tasks Due Today
+        </button>
+
+      </div>
       <form
         onSubmit={(e) => {
           e.preventDefault()
