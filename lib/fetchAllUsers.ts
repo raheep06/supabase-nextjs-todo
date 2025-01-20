@@ -14,7 +14,7 @@ export const fetchAllUsers = async () => {
 
     return data; // Return the fetched user data
   } catch (error) {
-    console.error('Error fetching users:', error.message);
+    console.error('Error fetching users:', error);
     throw error; // Rethrow the error for further handling
   } 
 };
