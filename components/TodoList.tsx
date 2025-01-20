@@ -46,6 +46,9 @@ function TodoList({ session }: { session: Session }) {
     };
 
     fetchTodos();
+
+
+
   }, [supabase, user.id]);
 
 /*
@@ -100,14 +103,21 @@ function TodoList({ session }: { session: Session }) {
       return;
     }
 
+    const formattedDueDate = due
+    ? new Date(due).toISOString() // Convert to a proper timestamp
+    : null;
+
+
     try {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({ task, user_id: user.id, assigned_to: assignedUser, assigned_by: user.id, due_date: dueDate || null})
+        .insert({ task, user_id: user.id, assigned_to: assignedUser, assigned_by: user.id, due_date: formattedDueDate})
         .select()
         .single();
 
       if (error) throw error;
+
+      
 
       setTodos((prevTodos) => [...prevTodos, todo]);
       setNewTaskText('');
@@ -165,7 +175,7 @@ function TodoList({ session }: { session: Session }) {
         
         <input
           className="rounded w-full p-2"
-          type="date"
+          type="datetime-local"
           placeholder="Due date for"
           onChange={(e) => {
             setDueDate(e.target.value)
