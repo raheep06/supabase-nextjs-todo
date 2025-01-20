@@ -13,7 +13,7 @@ function TodoList({ session }: { session: Session }) {
   const [dueDate, setDueDate] = useState('')
   const [errorText, setErrorText] = useState('')
   const [users, setUsers] = useState<any[]>([])
-  const [filter, setFilter] = useState<'all' | 'assignedToMe' | 'createdByMe' | 'overdue' | 'dueToday'>('all'); 
+  const [filter, setFilter] = useState<'all' | 'assignedToMe' | 'createdByMe' | 'overdue' | 'dueToday'>('all')
 
   const user = session.user
 
@@ -63,7 +63,7 @@ function TodoList({ session }: { session: Session }) {
 
   useEffect(() => {
     fetchTodos();
-/*
+
     const channel = supabase
       .channel('todos-changes')
       .on(
@@ -87,7 +87,7 @@ function TodoList({ session }: { session: Session }) {
       supabase.removeChannel(channel)
     }
 
-*/
+
 
   }, [supabase, user.id, filter]);
 
