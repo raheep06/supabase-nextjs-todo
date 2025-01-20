@@ -30,24 +30,49 @@ function TodoList({ session }: { session: Session }) {
     getUsers()
   }, []);
 
+
+  const fetchTodos = async () => {
+    let query = supabase.from('todos').select('*').order('id', { ascending: true });
+    query = query.eq("assigned_to", user.id);
+
+    try {
+      const { data: todos, error} = await query;
+      if (error) throw error;
+      setTodos(todos);
+
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+    }
+  };
+
+
   useEffect(() => {
-    const fetchTodos = async () => {
-      let query = supabase.from('todos').select('*').order('id', { ascending: true });
-      query = query.eq("assigned_to", user.id);
-
-      try {
-        const { data: todos, error} = await query;
-        if (error) throw error;
-        setTodos(todos);
-
-      } catch (error) {
-        console.error("Error fetching todos:", error);
-      }
-    };
-
     fetchTodos();
+/*
+    const channel = supabase
+      .channel('todos-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'todos' },
+        (payload) => {
+          if (payload.eventType === 'INSERT' && payload.new.assigned_to === user.id) {
+            setTodos((prev) => [...prev, payload.new as Todos])
+          } else if (payload.eventType === 'DELETE') {
+            setTodos((prev) => prev.filter((todo) => todo.id !== payload.old?.id))
+          } else if (payload.eventType === 'UPDATE') {
+            setTodos((prev) =>
+              prev.map((todo) => (todo.id === payload.new.id ? (payload.new as Todos) : todo))
+            )
+          }
+        }
+      )
+      .subscribe()
 
+    return () => {
+      supabase.removeChannel(channel)
+    }
 
+*/
 
   }, [supabase, user.id]);
 
@@ -116,10 +141,9 @@ function TodoList({ session }: { session: Session }) {
         .single();
 
       if (error) throw error;
-
-      
-
+    
       setTodos((prevTodos) => [...prevTodos, todo]);
+      await fetchTodos()
       setNewTaskText('');
       setAssignedTo('');
       setDueDate('');
@@ -219,12 +243,12 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
   
   return (
     <li className="w-full block cursor-pointer hover:bg-200 focus:outline-none focus:bg-200 transition duration-150 ease-in-out">
-      <div className="text-sm text-gray-500">
-        Assigned to: {todo.assigned_to || 'No one'}
-      </div>
       <div className="flex items-center px-4 py-4 sm:px-6">
         <div className="min-w-0 flex-1 flex items-center">
           <div className="text-sm leading-5 font-medium truncate">{todo.task}</div>
+          <span className='ml-4 text-sm text-gray-500'>
+            Due: {todo.due_date ? new Date(todo.due_date).toLocaleString() : 'No due date'}
+          </span>
         </div>
         <div>
           <input
