@@ -1,6 +1,7 @@
 import { Database } from '@/lib/schema'
 import { Session, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
+import { fetchAllUsers } from '@/lib/fetchAllUsers'
 
 type Todos = Database['public']['Tables']['todos']['Row']
 
@@ -11,18 +12,23 @@ function TodoList({ session }: { session: Session }) {
   const [assignedTo, setAssignedTo] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [errorText, setErrorText] = useState('')
+  const [users, setUsers] = useState<any[]>([])
 
   const user = session.user
 
-  const validateUser = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('users')
-      .select('id')
-      .eq('id', userId)
-      .single();
-  
-    return data ? true : false;
-  };
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        const usersData = await fetchAllUsers();
+        console.log("Fetched Users: ", usersData)
+        setUsers(usersData)
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    };
+
+    getUsers()
+  }, []);
 
   useEffect(() => {
     const fetchTodos = async () => {
@@ -32,17 +38,17 @@ function TodoList({ session }: { session: Session }) {
       try {
         const { data: todos, error} = await query;
         if (error) throw error;
-
         setTodos(todos);
+
       } catch (error) {
         console.error("Error fetching todos:", error);
       }
-    }
+    };
 
     fetchTodos();
   }, [supabase, user.id]);
 
-
+/*
   useEffect(() => {
     const fetchOverdueTasks = async () => {
       const { data: todos, error } = await supabase
@@ -78,7 +84,7 @@ function TodoList({ session }: { session: Session }) {
     fetchTasksDueToday()
   }, [supabase])
   
-
+*/
   const addTodo = async (taskText: string, assignedTo: string, dueDate: string) => {
     let task = taskText.trim()
     const assignedUser = assignedTo.trim()
@@ -97,13 +103,13 @@ function TodoList({ session }: { session: Session }) {
     try {
       const { data: todo, error } = await supabase
         .from('todos')
-        .insert({ task, user_id: user.id, assigned_to: assignedUser, due_date: dueDate || null})
+        .insert({ task, user_id: user.id, assigned_to: assignedUser, assigned_by: user.id, due_date: dueDate || null})
         .select()
         .single();
 
       if (error) throw error;
 
-      setTodos([...todos, todo]);
+      setTodos((prevTodos) => [...prevTodos, todo]);
       setNewTaskText('');
       setAssignedTo('');
       setDueDate('');
@@ -136,22 +142,26 @@ function TodoList({ session }: { session: Session }) {
         <input
           className="rounded w-full p-2"
           type="text"
-          placeholder="make coffee"
+          placeholder="Add a task description!"
           value={newTaskText}
           onChange={(e) => {
             setErrorText('')
             setNewTaskText(e.target.value)
           }}
         />
-        
-        <input
+
+        <select 
           className="rounded w-full p-2"
-          type="text"
-          placeholder="Assigned to (user ID)"
-          onChange={(e) => {
-            setAssignedTo(e.target.value)
-          }}
-        />
+          value={assignedTo}
+          onChange={(e) => setAssignedTo(e.target.value)}
+        >
+          <option value="">Assign to...</option>
+          {users.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.email}
+            </option>
+          ))}
+        </select>
         
         <input
           className="rounded w-full p-2"
@@ -196,7 +206,7 @@ const Todo = ({ todo, onDelete }: { todo: Todos; onDelete: () => void }) => {
       console.log('error', error)
     }
   }
-
+  
   return (
     <li className="w-full block cursor-pointer hover:bg-200 focus:outline-none focus:bg-200 transition duration-150 ease-in-out">
       <div className="text-sm text-gray-500">
