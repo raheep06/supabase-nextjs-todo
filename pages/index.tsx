@@ -2,12 +2,21 @@ import Head from 'next/head'
 import { useSession, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { Auth, ThemeSupa } from '@supabase/auth-ui-react'
 import TodoList from '@/components/TodoList'
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 
 
 function Home() {
   const session = useSession()
   const supabase = useSupabaseClient()
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data, error } = await supabase.auth.getSession()
+      console.log('Session Data:', data)
+      if (error) console.error('Error fetching session:', error.message)
+    }
+    fetchSession()
+  }, [supabase])
 
   return (
     <>

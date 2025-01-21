@@ -17,6 +17,9 @@ function TodoList({ session }: { session: Session }) {
   const [users, setUsers] = useState<any[]>([])
   const [filter, setFilter] = useState<'all' | 'assignedToMe' | 'createdByMe' | 'overdue' | 'dueToday'>('all')
 
+  console.log(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  console.log(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
   const user = session.user
 
   useEffect(() => {
