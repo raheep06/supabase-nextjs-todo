@@ -41,7 +41,7 @@ export interface Database {
           assigned_by?: string | null; // The user who assigned the task
         }
       }
-      users: { // Define the users table
+      users: { // Definition of the users table
         Row: {
           id: string; // UUID type
           email: string; // User's email

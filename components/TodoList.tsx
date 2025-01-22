@@ -5,20 +5,23 @@ import { fetchAllUsers } from '@/lib/fetchAllUsers'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// Definition of the type for a Todo row from the database schema
 type Todos = Database['public']['Tables']['todos']['Row']
 
+// Main component to display and manage the Todo List
 function TodoList({ session }: { session: Session }) {
-  const supabase = useSupabaseClient<Database>()
-  const [todos, setTodos] = useState<Todos[]>([])
-  const [newTaskText, setNewTaskText] = useState('')
-  const [assignedTo, setAssignedTo] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [errorText, setErrorText] = useState('')
-  const [users, setUsers] = useState<any[]>([])
-  const [filter, setFilter] = useState<'all' | 'assignedToMe' | 'createdByMe' | 'overdue' | 'dueToday'>('all')
+  const supabase = useSupabaseClient<Database>() // Supabase client for database operations
+  const [todos, setTodos] = useState<Todos[]>([]) // State to store the list of todos
+  const [newTaskText, setNewTaskText] = useState('') // State for the new task input
+  const [assignedTo, setAssignedTo] = useState('') // State for task assignment
+  const [dueDate, setDueDate] = useState('') // State for task due date
+  const [errorText, setErrorText] = useState('') // State for error messages
+  const [users, setUsers] = useState<any[]>([]) // State for the list of users
+  const [filter, setFilter] = useState<'all' | 'assignedToMe' | 'createdByMe' | 'overdue' | 'dueToday'>('all') // State for task filters
 
-  const user = session.user;
+  const user = session.user; // Represents the Current logged-in user
 
+  // HelPS to fetch the list of all users from the database
   const getUsers = async () => {
     try {
       const usersData = await fetchAllUsers();
@@ -29,11 +32,13 @@ function TodoList({ session }: { session: Session }) {
     }
   };
 
+  // Fetch users when the component is called
   useEffect(() => {
     getUsers()
   }, []);
 
-  
+
+  // Adds the current user to the "public.users" which aims to be identical too the "auth.users" table in the database
   const addCurrentUserToPublicUsers = async () => {
     try {
       const { error } = await supabase
@@ -57,8 +62,13 @@ function TodoList({ session }: { session: Session }) {
   };
 
 
+  // Fetch todos from the database based on the selected filter
   const fetchTodos = async () => {
     let query = supabase.from('todos').select('*').order('id', { ascending: true });
+
+
+  // Apply filters based on user selection
+
     if (filter === "assignedToMe") {
       query = query.eq("assigned_to", user.id)
 
@@ -85,10 +95,11 @@ function TodoList({ session }: { session: Session }) {
     }
   };
 
-
+  // Fetch todos and subscribtion to real-time updates
   useEffect(() => {
     fetchTodos();
 
+    // Real-time subscription to listen for changes in my "public.todos" table
     const channel = supabase
       .channel('todos-changes')
       .on(
@@ -118,11 +129,13 @@ function TodoList({ session }: { session: Session }) {
 
   }, [supabase, user.id, filter]);
 
+  // Functiion for Adding a new todo to the database
   const addTodo = async (taskText: string, assignedTo: string, dueDate: string) => {
     let task = taskText.trim()
     const assignedUser = assignedTo.trim()
     const due = dueDate.trim()
 
+    // Validation of inputs inputs
     if (!task.length) {
       setErrorText("Task cannot be empty.");
       return;
@@ -134,7 +147,7 @@ function TodoList({ session }: { session: Session }) {
     }
 
     const formattedDueDate = due
-    ? new Date(due).toISOString() // Convert to a proper timestamp
+    ? new Date(due).toISOString() // Format of due date
     : null;
 
 
@@ -147,7 +160,7 @@ function TodoList({ session }: { session: Session }) {
 
       if (error) throw error;
     
-      setTodos((prevTodos) => [...prevTodos, todo]);
+      setTodos((prevTodos) => [...prevTodos, todo]); // Updating todos state, with the previous content of todos
       await fetchTodos()
       setNewTaskText('');
       setAssignedTo('');
@@ -159,6 +172,8 @@ function TodoList({ session }: { session: Session }) {
     }
   };
 
+
+  // Fucntion for Delete a todo from the database
   const deleteTodo = async (id: number) => {
     try {
       await supabase.from('todos').delete().eq('id', id).throwOnError()
@@ -168,6 +183,9 @@ function TodoList({ session }: { session: Session }) {
     }
   }
 
+
+
+  // Front End Visualisation
   return (
     <div className="w-full">
       <h1 className="mb-12">Todo List.</h1>

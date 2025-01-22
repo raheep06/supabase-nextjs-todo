@@ -5,16 +5,16 @@ import { supabase } from './initSupabase';
 export const fetchAllUsers = async () => {
   try {
     const { data, error } = await supabase
-      .from('users') // Use the correct table name for users
-      .select('id, email'); // Select relevant columns (e.g., id and email)
+      .from('users')
+      .select('id, email');
 
     if (error) {
-      throw error; // Throw error if any
+      throw error; // Throws errors if there are any
     }
 
-    return data; // Return the fetched user data
+    return data; // Returns the fetched user data
   } catch (error) {
     console.error('Error fetching users:', error);
-    throw error; // Rethrow the error for further handling
+    throw error; // Rethrows the error for further error handling
   } 
 };
