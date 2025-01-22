@@ -40,7 +40,7 @@ function TodoList({ session }: { session: Session }) {
         .from('users') 
         .insert({
           id: user.id,
-          email: user.email
+          email: user.email || ""
         });
 
       if (error) {
