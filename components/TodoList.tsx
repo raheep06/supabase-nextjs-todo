@@ -17,24 +17,44 @@ function TodoList({ session }: { session: Session }) {
   const [users, setUsers] = useState<any[]>([])
   const [filter, setFilter] = useState<'all' | 'assignedToMe' | 'createdByMe' | 'overdue' | 'dueToday'>('all')
 
-  console.log(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  console.log(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  const user = session.user;
 
-  const user = session.user
+  const getUsers = async () => {
+    try {
+      const usersData = await fetchAllUsers();
+      console.log("Fetched Users: ", usersData)
+      setUsers(usersData)
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    }
+  };
 
   useEffect(() => {
-    const getUsers = async () => {
-      try {
-        const usersData = await fetchAllUsers();
-        console.log("Fetched Users: ", usersData)
-        setUsers(usersData)
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      }
-    };
-
     getUsers()
   }, []);
+
+  
+  const addCurrentUserToPublicUsers = async () => {
+    try {
+      const { error } = await supabase
+        .from('users') 
+        .insert({
+          id: user.id,
+          email: user.email
+        });
+
+      if (error) {
+        console.error('Failed to insert user:', error);
+        toast.error('Failed to add user to the list.');
+      } else {
+        toast.success('Successfully joined the Todo List!');
+        await getUsers();
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast.error('An unexpected error occurred.');
+    }
+  };
 
 
   const fetchTodos = async () => {
@@ -151,6 +171,18 @@ function TodoList({ session }: { session: Session }) {
   return (
     <div className="w-full">
       <h1 className="mb-12">Todo List.</h1>
+  
+      <div className="mb-6">
+        <button
+          onClick={addCurrentUserToPublicUsers}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded"
+        >
+          Join the Todo List
+        </button>
+        <p className="text-gray-600 mt-2">
+          Click this button to add yourself to the Todo List.
+        </p>
+      </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
         <button onClick={() => setFilter("all")} className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'>

@@ -8,52 +8,6 @@ export default function Home() {
   const session = useSession()
   const supabase = useSupabaseClient()
 
-  useEffect(() => {
-    const addUserToPublicTable = async (user: { id: string; email: string | null }) => {
-
-      const { data: existingUser, error: fetchError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (fetchError) {
-        console.error('Error checking user existence:', fetchError.message);
-        return;
-      }
-
-      if (!existingUser) {
-        // Insert the new user into the public.users table
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert([{ id: user.id, email: user.email }]);
-
-        if (insertError) {
-          console.error('Error inserting user into public.users:', insertError.message);
-        } else {
-          console.log('User added to public.users table');
-        }
-      } else {
-        console.log('User already exists in public.users table');
-      }
-    };
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const { user } = session;
-        await addUserToPublicTable({
-          id: user.id,
-          email: user.email ?? null, // Fallback to null if email is undefined
-        });
-      }
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, [supabase]);
-
-
   return (
     <>
       <Head>
